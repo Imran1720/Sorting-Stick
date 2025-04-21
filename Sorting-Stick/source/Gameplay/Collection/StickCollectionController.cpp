@@ -72,7 +72,7 @@ namespace Gameplay
 			float total_spacing = collection_model->space_percentage * total_space;
 
 			// Calculate the space between each stick
-			float space_between = total_spacing / (collection_model->number_of_elements - 1);
+			float space_between = total_spacing / (collection_model->number_of_elements);
 			collection_model->setElementSpacing(space_between);
 
 			// Calculate the remaining space for the rectangles
@@ -116,16 +116,24 @@ namespace Gameplay
 
 		void StickCollectionController::processSortThreadState()
 		{
-			if (sort_thread.joinable() && isCollectionSorted()) sort_thread.join();
+			if (sort_thread.joinable() && isCollectionSorted())
+			{
+				sort_thread.join();
+				sort_state = SortState::SORTING;
+			}
 		}
 
 		void StickCollectionController::processBubbleSort()
 		{
-			sort_state = SortState::SORTING;
-
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
 			for (int i = 0; i < collection_model->number_of_elements; i++)
 			{
+					if (sort_state == SortState::NOT_SORTING)
+					{
+						break;
+					}
 				bool swapped = false;
+
 				for (int j = 0; j < collection_model->number_of_elements - i - 1; j++)
 				{
 					if (sort_state == SortState::NOT_SORTING)
@@ -133,13 +141,14 @@ namespace Gameplay
 						break;
 					}
 
-					ServiceLocator::getInstance()->getSoundService()->playSound(Sound::SoundType::COMPARE_SFX);
+					number_of_array_access+=2;
+					number_of_comparisons++;
+					
+					sound_service->playSound(Sound::SoundType::COMPARE_SFX);
 					
 					sticks[j]->stick_view->setFillColor(collection_model->processing_element_color);
 					sticks[j+1]->stick_view->setFillColor(collection_model->processing_element_color);
 					
-					number_of_array_access+=2;
-					number_of_comparisons++;
 
 					if (sticks[j]->data > sticks[j + 1]->data)
 					{
@@ -216,10 +225,10 @@ namespace Gameplay
 
 		void StickCollectionController::reset()
 		{
+			sort_state = SortState::NOT_SORTING;
 			
 			if (sort_thread.joinable()) sort_thread.join();
 
-			sort_state = SortState::NOT_SORTING;
 			shuffleSticks();
 			resetSticksColor();
 			resetVariables();
@@ -229,6 +238,8 @@ namespace Gameplay
 		{
 			current_operation_delay = collection_model->operation_delay;
 			this->sort_type = sort_type;
+			sort_state = SortState::SORTING;
+
 
 			switch (sort_type)
 			{
