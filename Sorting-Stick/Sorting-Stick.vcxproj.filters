@@ -159,4 +159,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="assets\sounds\button_click_sound.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="assets\sounds\compare_sfx.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+  </ItemGroup>
 </Project>

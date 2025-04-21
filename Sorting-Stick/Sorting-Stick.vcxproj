@@ -184,6 +184,10 @@
     <ClInclude Include="include\UI\UIElement\UIView.h" />
     <ClInclude Include="include\UI\UIService.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="assets\sounds\button_click_sound.wav" />
+    <Media Include="assets\sounds\compare_sfx.wav" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
