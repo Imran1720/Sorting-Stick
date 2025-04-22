@@ -239,6 +239,59 @@ namespace Gameplay
 				setCompletedColor();
 		}
 
+		void StickCollectionController::processSelectionSort()
+		{
+			int min_index;
+			int max_range = collection_model->number_of_elements;
+			Stick* temporary_stick = nullptr;
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
+
+			for (int i = 0; i < max_range; i++)
+			{
+				if (sort_state == SortState::NOT_SORTING)
+				{
+					break;
+				}
+				min_index = i;
+				sticks[i]->stick_view->setFillColor(collection_model->selected_element_color);
+
+				for (int j = i + 1; j < max_range; j++)
+				{
+					if (sort_state == SortState::NOT_SORTING)
+					{
+						break;
+					}
+					sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+				
+					number_of_array_access += 2;
+					number_of_comparisons++;
+					
+					if (sticks[min_index]->data > sticks[j]->data)
+					{
+						if (min_index != i) 
+							sticks[min_index]->stick_view->setFillColor(collection_model->element_color);
+						min_index = j;
+						sticks[min_index]->stick_view->setFillColor(collection_model->temporary_processing_color);
+						continue;
+					}
+					sticks[j]->stick_view->setFillColor(collection_model->processing_element_color);
+					std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+					sticks[j]->stick_view->setFillColor(collection_model->element_color);
+				}
+
+				if (min_index != i)
+				{
+
+					temporary_stick = sticks[i];
+					sticks[i] = sticks[min_index];
+					sticks[min_index] = temporary_stick;
+					updateStickPosition();
+				}
+				sticks[i]->stick_view->setFillColor(collection_model->placement_position_element_color);
+
+			}
+		}
+
 		void StickCollectionController::setCompletedColor()
 		{
 			for (int i = 0; i < collection_model->number_of_elements; i++)
@@ -314,6 +367,14 @@ namespace Gameplay
 				time_complexity = "O(n^2)";
 
 				sort_thread = std::thread(&StickCollectionController::processInsertionSort, this);
+				break;
+
+			case Gameplay::Collection::SortType::SELECTION_SORT:
+				color_delay = collection_model->initial_color_delay;
+				current_operation_delay = collection_model->operation_delay;
+				time_complexity = "O(n^2)";
+
+				sort_thread = std::thread(&StickCollectionController::processSelectionSort, this);
 				break;
 			}
 		}

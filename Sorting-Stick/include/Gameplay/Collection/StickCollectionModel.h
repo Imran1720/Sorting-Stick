@@ -36,7 +36,7 @@ namespace Gameplay
             const sf::Color selected_element_color = sf::Color::Blue;
             const sf::Color temporary_processing_color = sf::Color::Yellow;
 
-            const long operation_delay = 150;
+            const long operation_delay = 100;
             const long initial_color_delay = 40;
 
             StickCollectionModel();

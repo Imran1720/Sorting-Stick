@@ -20,8 +20,8 @@ namespace UI
 			const float array_access_text_x_position = 1170.f;
 
 			const float num_sticks_text_x_position = 60.f;
-			const float delay_text_x_position = 687.f;
-			const float time_complexity_text_x_position = 1250.f;
+			const float delay_text_x_position = 580.f;
+			const float time_complexity_text_x_position = 1170.f;
 
 			const float menu_button_x_position = 1770.f;
 			const float menu_button_y_position = 33.f;
