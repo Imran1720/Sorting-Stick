@@ -5,6 +5,7 @@
 #include "Global/ServiceLocator.h"
 #include "Gameplay/Collection/Stick.h"
 #include <random>
+#include <vector>
 #include <iostream>
 
 namespace Gameplay
@@ -292,8 +293,199 @@ namespace Gameplay
 			}
 		}
 
+		void StickCollectionController::processMergeSort()
+		{
+			int size = getNumberOfSticks() - 1;
+			if (size > 1)
+			{
+				mergeSort(0, size);
+				setCompletedColor();
+			}
+		}
+
+		void StickCollectionController::processInPlaceMergeSort()
+		{
+			int size = getNumberOfSticks() - 1;
+			if (size > 1)
+			{
+				inPlaceMergeSort(0, size);
+				inPlaceMerge(0, size / 2, size);
+				setCompletedColor();
+			}
+		}
+
+		void StickCollectionController::inPlaceMergeSort(int left, int right)
+		{
+			if (left >= right)
+			{
+				return;
+			}
+
+			int mid = left + (right - left) / 2;
+			inPlaceMergeSort(left, mid);
+			//inPlaceMerge(left, (left + (mid-left) / 2), mid);
+
+			inPlaceMergeSort(mid+1,right);
+			//inPlaceMerge(mid + 1, (mid + 1) + (right - (mid + 1)) / 2, right);
+
+			inPlaceMerge(left, mid, right);
+		}
+
+		void StickCollectionController::inPlaceMerge(int left, int mid, int right)
+		{
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
+			int start2 = mid + 1;
+			
+			/*if (mid < 0 || mid >= sticks.size() || start2 < 0 || start2 >= sticks.size()) {
+				return;
+			}*/
+
+			if (sticks[mid]->data <= sticks[start2]->data )
+			{
+				number_of_array_access += 2;
+				number_of_comparisons++;
+				return;
+			}
+
+			while (left <= mid && start2 <= right)
+			{
+				sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+				number_of_comparisons++;
+				number_of_array_access+=2;
+				
+				if (sticks[left]->data <= sticks[start2]->data)
+				{
+					left++;
+				}
+				else
+				{
+					Stick* temp_stick = sticks[start2];
+
+					/*	for (int i = start2; i > left; i--)
+						{
+							sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+							sticks[i] = sticks[i - 1];
+
+							sticks[i]->stick_view->setFillColor(collection_model->processing_element_color);
+							sticks[i-1]->stick_view->setFillColor(collection_model->processing_element_color);
+
+							std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+
+							sticks[i]->stick_view->setFillColor(collection_model->element_color);
+							sticks[i - 1]->stick_view->setFillColor(collection_model->element_color);
+						}*/
+
+					int index = start2;
+					while (index != left)
+					{
+						sticks[index] = sticks[index - 1];
+						index--;
+
+						number_of_array_access += 2;
+					}
+
+					sticks[left] = temp_stick;
+					left++;
+					start2++;
+					mid++;
+					updateStickPosition();
+
+				}
+				sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+				sticks[left-1]->stick_view->setFillColor(collection_model->processing_element_color);
+				std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+				sticks[left - 1]->stick_view->setFillColor(collection_model->element_color);
+			}
+		}
+
+		void StickCollectionController::merge(int left, int mid, int right)
+		{
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
+
+			std::vector<Stick*> temp_sticks(right-left+1);
+
+			int k = 0;
+			for (int i = left; i <= right; i++)
+			{
+				if (sort_state == SortState::NOT_SORTING)
+				{
+					break;
+				}
+				number_of_array_access++;
+				temp_sticks[k] = sticks[i];
+				temp_sticks[k++]->stick_view->setFillColor(collection_model->temporary_processing_color);
+				updateStickPosition();
+			}
+
+			int i = 0;
+			int j = mid - left+1 ;
+			k = left;
+
+			while (i < mid-left+1 && j <temp_sticks.size())
+			{
+				if (sort_state == SortState::NOT_SORTING)
+				{
+					break;
+				}
+				if (temp_sticks[i]->data <= temp_sticks[j]->data)
+				{
+					sticks[k] = temp_sticks[i++];
+				}
+				else
+				{
+					sticks[k] = temp_sticks[j++];
+				}
+
+				number_of_comparisons++;
+				number_of_array_access += 2;
+
+				sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+				sticks[k++]->stick_view->setFillColor(collection_model->processing_element_color);
+				std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+				updateStickPosition();
+			}
+
+			while (i < mid - left + 1 || j < temp_sticks.size())
+			{
+				if (sort_state == SortState::NOT_SORTING)
+				{
+					break;
+				}
+				if (i <= mid - left)
+				{
+					sticks[k] = temp_sticks[i++];
+				}
+				else
+				{
+					sticks[k] = temp_sticks[j++];
+				}
+
+				sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+				sticks[k++]->stick_view->setFillColor(collection_model->processing_element_color);
+				std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+
+				updateStickPosition();
+			}
+
+			
+		}
+
+		void StickCollectionController::mergeSort(int left, int right)
+		{
+			if (left >= right)
+			{
+				return;
+			}
+			int mid = left+(right - left) / 2;
+			mergeSort(left, mid);
+			mergeSort(mid+1,right);
+
+			merge(left, mid, right);
+		}
+
 		void StickCollectionController::setCompletedColor()
 		{
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
 			for (int i = 0; i < collection_model->number_of_elements; i++)
 			{
 				sticks[i]->stick_view->setFillColor(collection_model->element_color);
@@ -306,10 +498,10 @@ namespace Gameplay
 					break;
 				}
 				
-				
 				std::this_thread::sleep_for(std::chrono::milliseconds(color_delay));
+				sound_service->playSound(Sound::SoundType::COMPARE_SFX);
 
-				ServiceLocator::getInstance()->getSoundService()->playSound(Sound::SoundType::COMPARE_SFX);
+				
 				sticks[i]->stick_view->setFillColor(collection_model->placement_position_element_color);
 			}
 
@@ -375,6 +567,15 @@ namespace Gameplay
 				time_complexity = "O(n^2)";
 
 				sort_thread = std::thread(&StickCollectionController::processSelectionSort, this);
+				break;
+
+			case Gameplay::Collection::SortType::MERGE_SORT:
+				color_delay = collection_model->initial_color_delay;
+				current_operation_delay = collection_model->operation_delay;
+				time_complexity = "O(n log n)";
+				
+
+				sort_thread = std::thread(&StickCollectionController::processMergeSort, this);
 				break;
 			}
 		}
