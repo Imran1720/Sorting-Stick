@@ -50,9 +50,12 @@ namespace Gameplay
             void processBubbleSort();
             void processInsertionSort();
             void processSelectionSort();
-
             void processMergeSort();
             void processInPlaceMergeSort();
+            void processQuickSort();
+
+            int partition(int left, int right);
+            void quickSort(int left, int right);
 
             void inPlaceMergeSort(int left, int right);
             void inPlaceMerge(int left, int mid, int right);

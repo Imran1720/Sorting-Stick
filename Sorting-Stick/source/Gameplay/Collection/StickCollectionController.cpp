@@ -314,6 +314,86 @@ namespace Gameplay
 			}
 		}
 
+		void StickCollectionController::processQuickSort()
+		{
+			int size = getNumberOfSticks();
+			if (size > 1)
+			{
+				quickSort(0, size - 1);
+				
+			}
+			setCompletedColor();
+		}
+
+		int StickCollectionController::partition(int left, int right)
+		{
+			if(sort_state == SortState::NOT_SORTING)
+			{
+				return-1;
+			}
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
+			int pivot = sticks[right]->data;
+			sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+			sticks[right]->stick_view->setFillColor(collection_model->selected_element_color);
+			number_of_array_access++;
+			int i = left - 1;
+			Stick* temp = nullptr;
+
+			for (int j = left; j < right; j++)
+			{
+
+				if (sort_state == SortState::NOT_SORTING)
+				{
+					return-1;
+				}
+
+				number_of_comparisons ++;
+				if (sticks[j]->data <= pivot)
+				{
+					i++;
+					sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+					sticks[i]->stick_view->setFillColor(collection_model->processing_element_color);
+					sticks[j]->stick_view->setFillColor(collection_model->processing_element_color);
+
+					std::swap(sticks[j], sticks[i]);
+					updateStickPosition();
+					number_of_array_access+=2;
+					std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+					//sticks[i]->stick_view->setFillColor(collection_model->element_color);
+				}
+					sticks[j]->stick_view->setFillColor(collection_model->element_color);
+			}
+
+			sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+			std::swap(sticks[i + 1], sticks[right]);
+			updateStickPosition();
+			
+
+			return i+1;
+		}
+
+		void StickCollectionController::quickSort(int left, int right)
+		{
+			if (left >= right) return;
+
+			int pivot = partition(left, right);
+			if (pivot == -1)
+			{
+				return;
+			}
+			quickSort(left, pivot - 1);
+			for (int i = left; i <= pivot - 1; i++)
+			{
+				sticks[i]->stick_view->setFillColor(collection_model->placement_position_element_color);
+			}
+
+			quickSort(pivot + 1, right);
+			for (int i = pivot+1; i <= right; i++)
+			{
+				sticks[i]->stick_view->setFillColor(collection_model->placement_position_element_color);
+			}
+		}
+
 		void StickCollectionController::inPlaceMergeSort(int left, int right)
 		{
 			if (left >= right)
@@ -573,9 +653,13 @@ namespace Gameplay
 				color_delay = collection_model->initial_color_delay;
 				current_operation_delay = collection_model->operation_delay;
 				time_complexity = "O(n log n)";
-				
 
-				sort_thread = std::thread(&StickCollectionController::processMergeSort, this);
+			case Gameplay::Collection::SortType::QUICK_SORT:
+				color_delay = collection_model->initial_color_delay;
+				current_operation_delay = collection_model->operation_delay;
+				time_complexity = "O(n log n)";
+
+				sort_thread = std::thread(&StickCollectionController::processQuickSort, this);
 				break;
 			}
 		}
